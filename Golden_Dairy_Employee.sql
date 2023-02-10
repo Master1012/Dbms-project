@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `Employee`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Employee` (
-  `ID` int DEFAULT NULL,
+  `ID` int PRIMARY KEY NOT NULL,
   `Name` varchar(50) DEFAULT NULL,
   `Address` varchar(100) DEFAULT NULL,
   `Email` varchar(50) DEFAULT NULL,
@@ -53,3 +53,4 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2023-02-09 18:20:03
+select * from Employee;
