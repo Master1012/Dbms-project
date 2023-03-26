@@ -28,7 +28,7 @@ def login():
     #     return customerpage(uid,name)
 def customerpage(uid,name):
     while(True):
-        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check profile information\n2. Check cart\n3. View products\n4. Add products to cart\n5. Place order\n6. Check previous orders\n7. Logout\n"))
+        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check profile information\n2. Check cart\n3. View products\n4. Add products to cart\n5. Place order\n6. Check previous orders\n7. Get more product information\n8. Logout\n"))
         if(c==1):
             mycursor.execute("select * from customers where id=%s",(uid,))
             l=mycursor.fetchall()
@@ -58,6 +58,10 @@ def customerpage(uid,name):
         elif(c==5):
             confirm=str(input("Confirm order?(yes/no) "))
             if(confirm=="yes"):
+                # mycursor.execute("select * from product_in_cart where customer_id = %s",(uid,))
+                # cart=mycursor.fetchall()
+                # if(len(cart)!=0):
+                #     mycursor.execute("insert into new_order ")
                 print("Order confirmed")
         elif(c==6):
             mycursor.execute("select orders.order_id,orders.cost,product.name,product.id,product.price,product.Type,product.Quantity,new_order.Quantity as Number from orders inner join new_order on orders.order_id=new_order.orderid inner join product on product.id=new_order.productid where Customer_ID=%s;",(uid,))
@@ -75,6 +79,8 @@ def customerpage(uid,name):
             else:
                 print("Looks like you haven't ordered anything in the past.")
         elif(c==7):
+            moreproductinfo()
+        elif(c==8):
             return 
 def signup():
     name=str(input("Enter your name: "))
@@ -110,7 +116,7 @@ def admin_login():
     # return adminpage(uid,name)
 def adminpage(uid,name):
     while(True):
-        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check sales info \n2. Check employees data\n3. Most selling product\n4. Check supplier data\n5. Add a product\n6. Add an employee\n7. Add a supplier\n8. Logout\n"))
+        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check sales info \n2. Check employees data\n3. Most selling product\n4. Check supplier data\n5. Add a product\n6. Add an employee\n7. Add a supplier\n8. Product catalogue\n9. More product information\n10. Logout\n"))
         if (c==1):
             date1=input("This will show the value of total sales between a time period\nEnter the starting date and time (in form of YYYY-MM-DD hh:mm:ss): ")
             date2 = input("Enter the ending date and time (in form of YYYY-MM-DD hh:mm:ss): ")
@@ -140,7 +146,7 @@ def adminpage(uid,name):
             for row in l:
                 print(f"Id: {row[0]} \nName: {row[1]} \nAddress: {row[2]} \nEmail: {row[3]} \nContact No: {row[4]} \nType of Supply: {row[5]}")
         elif(c==5):
-            name=input("Enter product name: ")
+            pname=input("Enter product name: ")
             type=input("Enter product type: ")
             price=input("Enter the product price: ")
             rate=input("Enter the initial rating: ")
@@ -153,33 +159,37 @@ def adminpage(uid,name):
             mycursor.execute("select * from product")
             lst = mycursor.fetchall()
             id=len(lst)+1
-            mycursor.execute("insert into product values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(name,id,type,price,rate,protein,en,fat,carb,quantity,av))
+            mycursor.execute("insert into product values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(pname,id,type,price,rate,protein,en,fat,carb,quantity,av))
             con.commit()
             print("Product adding successful. Product id is ",id)
         elif(c==6):
-            name=str(input("Enter your name: "))
-            addr=str(input("Enter your address: "))
-            email=input("Enter your email id: ")
-            phone=input("Enter your phone number: ")
-            salary=str(input("Enter your password: "))
+            ename=str(input("Enter employee's name: "))
+            addr=str(input("Enter employee's address: "))
+            email=input("Enter employee's email id: ")
+            phone=input("Enter employee's phone number: ")
+            salary=str(input("Enter employee's password: "))
             role=input("Enter the role of the employee: ")
             mycursor.execute("select * from employee")
             lst = mycursor.fetchall()
             id=len(lst)+1
-            mycursor.execute("insert into employee(Name, id, Address,Email,Contact_No,salary,role) values (%s,%s,%s,%s,%s,%s,%s)",(name,id,addr,email,phone,salary,role))
+            mycursor.execute("insert into employee(Name, id, Address,Email,Contact_No,salary,role) values (%s,%s,%s,%s,%s,%s,%s)",(ename,id,addr,email,phone,salary,role))
             con.commit()
             print("Signup successful. The new employee's id is ",id)
         elif(c==7):
-            name=str(input("Enter your name: "))
-            addr=str(input("Enter your address: "))
-            email=input("Enter your email id: ")
-            phone=input("Enter your phone number: ")
+            sname=str(input("Enter supplier's name: "))
+            addr=str(input("Enter supplier's address: "))
+            email=input("Enter supplier's email id: ")
+            phone=input("Enter supplier's phone number: ")
             mycursor.execute("select * from supplier")
             type=input("Enter the type of supply: ")
             lst = mycursor.fetchall()
             id=len(lst)+1
-            mycursor.execute("insert into supplier(Name, id, Address,Email,Contact_No,Type_of_Supply) values (%s,%s,%s,%s,%s,%s)",(name,id,addr,email,phone,type))
+            mycursor.execute("insert into supplier(Name, id, Address,Email,Contact_No,Type_of_Supply) values (%s,%s,%s,%s,%s,%s)",(sname,id,addr,email,phone,type))
         elif(c==8):
+            productlist()
+        elif(c==9):
+            moreproductinfo()
+        elif(c==10):
             return 
 def productlist():
     print("Choose among the following categories")
@@ -193,9 +203,20 @@ def productlist():
     print("{:<30} {:<10} {:<10} {:<10} {:<10}".format('Name','ID','Price','Rating','Quantity'))
     for row in mycursor:
         print("{:<30} {:<10} {:<10} {:<10} {:<10}".format(row[0],row[1],row[2],row[3],row[4]))
+def moreproductinfo():
+    c=int(input("Enter the product id of the product you want to see more information about: "))
+    mycursor.execute("Select * from product where id=%s",(c,))
+    l=mycursor.fetchall()
+    print("{:<30} {:<10} {:<30} {:<10} {:<10} {:<10} {:<10} {:<10} {:<15} {:<10}".format('Name','ID','Type','Price','Rating','Protein','Energy','Fat','Carbohydrate','Quantity'))
+    if(len(l)!=0):
+        for row in l:
+            print("{:<30} {:<10} {:<30} {:<10} {:<10} {:<10} {:<10} {:<10} {:<15} {:<10}".format(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9]))
+        print("\n")
+    else:
+        print("No such product exists")
 while(True):
     print("Welcome to Golden Dairy:")
-    ac=int(input("1. Customer login/sign up\n2. Admin login\n3. Product catalogue\n4. Exit\n"))
+    ac=int(input("1. Customer login/sign up\n2. Admin login\n3. Product catalogue\n4. Get more product information\n5. Exit\n"))
     if(ac==1):
         c=int(input("1. Login\n2. Sign up\n3. Back\n"))
         if (c==1):
@@ -206,5 +227,7 @@ while(True):
         admin_login()
     elif (ac==3):
         productlist()
-    elif (ac==4):
+    elif(ac==4):
+        moreproductinfo()
+    elif (ac==5):
         break
