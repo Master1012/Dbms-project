@@ -58,10 +58,10 @@ def customerpage(uid,name):
         elif(c==5):
             confirm=str(input("Confirm order?(yes/no) "))
             if(confirm=="yes"):
-                # mycursor.execute("select * from product_in_cart where customer_id = %s",(uid,))
-                # cart=mycursor.fetchall()
-                # if(len(cart)!=0):
-                #     mycursor.execute("insert into new_order ")
+                mycursor.execute("select * from product_in_cart where customer_id = %s",(uid,))
+                cart=mycursor.fetchall()
+                if(len(cart)!=0):
+                    mycursor.execute("insert into new_order ")
                 print("Order confirmed")
         elif(c==6):
             mycursor.execute("select orders.order_id,orders.cost,product.name,product.id,product.price,product.Type,product.Quantity,new_order.Quantity as Number from orders inner join new_order on orders.order_id=new_order.orderid inner join product on product.id=new_order.productid where Customer_ID=%s;",(uid,))
@@ -116,7 +116,7 @@ def admin_login():
     # return adminpage(uid,name)
 def adminpage(uid,name):
     while(True):
-        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check sales info \n2. Check employees data\n3. Most selling product\n4. Check supplier data\n5. Add a product\n6. Add an employee\n7. Add a supplier\n8. Product catalogue\n9. More product information\n10. Logout\n"))
+        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check sales info \n2. Check employees data\n3. Most selling product\n4. Check supplier data\n5. Add a product\n6. Add an employee\n7. Add a supplier\n8. Product catalogue\n9. More product information\n10. Check analysis\n11. Update employee role\n12. Logout\n"))
         if (c==1):
             date1=input("This will show the value of total sales between a time period\nEnter the starting date and time (in form of YYYY-MM-DD hh:mm:ss): ")
             date2 = input("Enter the ending date and time (in form of YYYY-MM-DD hh:mm:ss): ")
@@ -190,6 +190,14 @@ def adminpage(uid,name):
         elif(c==9):
             moreproductinfo()
         elif(c==10):
+            checkanalysis()
+        elif(c==11):
+            eid=int(input("Enter the ID of the employee whose role you want to change: "))
+            newrole=input("Enter the new role of the employee: ")
+            mycursor.execute("Update employee set employee.role=%s where employee.id=%s",(newrole,eid))
+            con.commit()
+            print("Updated employee role")
+        elif(c==12):
             return 
 def productlist():
     print("Choose among the following categories")
@@ -214,6 +222,47 @@ def moreproductinfo():
         print("\n")
     else:
         print("No such product exists")
+def checkanalysis():
+    c=int(input("Enter the type of analysis you wish to perform:\n1. Sales based on payment modes\n2. Employees based on roles\n3. Products based on rating and type\n4. Customers on how many orders they have given in a year\n5. Number of customers giving particular number of orders in a year\n6. Return"))
+    if(c==1):
+        mycursor.execute("select coalesce(year(Date_Time_of_Purchase),'Total') as year, coalesce(Payment_Mode,'Total') as Payment_Mode, sum(Cost) from orders group by year, Payment_Mode with rollup;")
+        l=mycursor.fetchall()
+        print("{:<30} {:<30} {:<30}".format('year','Payment mode','Cost'))
+        for row in l:
+            if(row[0]!=None):
+                print("{:<30} {:<30} {:<30}".format(row[0],row[1],row[2]))
+            else:
+                print("{:<30} {:<30} {:<30}".format("Total",row[1],row[2]))
+    elif(c==2):
+        mycursor.execute("Select coalesce(Role,'Average') as Role, AVG(Salary) AS Average_Salary from Employee GROUP BY Role with ROLLUP; ")
+        l=mycursor.fetchall()
+        print("{:<30} {:<30}".format("Role","Average Salary"))
+        for row in l:
+            print("{:<30} {:<30}".format(row[0],row[1]))
+    elif(c==3):
+        mycursor.execute("select coalesce(Type,'Average')as Type,AVG(Rating) as Average_Rating, AVG(Price) AS Average_Price, AVG(Protein) AS Average_Protein, AVG(Energy) AS Average_Energy, AVG(Carbohydrate) AS Average_Carbohydrate, AVG(Fat) AS Average_Fat, AVG(Quantity) AS Total_Quantity from Product Group By Type, Rating with ROLLUP;")
+        l=mycursor.fetchall()
+        print("{:<25} {:<25} {:<15} {:<25} {:<25} {:<25} {:<20} {:<20}".format("Type","Average Rating","Average Price","Average Protein","Average Energy","Average Carbohydrate","Average fat","Average Quantity"))
+        for row in l:
+            print("{:<25} {:<25} {:<15} {:<25} {:<25} {:<25} {:<20} {:<20}".format(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]))
+    elif(c==4):
+        mycursor.execute("select coalesce(Customer_Id,'Total') as Customer_ID, coalesce(year(Date_Time_of_purchase),'Total') as Year, count(order_id) from orders group by Year, Customer_ID with rollup;")
+        l=mycursor.fetchall()
+        print("{:<20} {:<20} {:<20}".format('Customer ID','Year','Number of Orders'))
+        for row in l:
+            if (row[1]!=None):
+                print("{:<20} {:<20} {:<20}".format(row[0],row[1],row[2]))
+            else:
+                print("{:<20} {:<20} {:<20}".format(row[0],"Total",row[2]))
+    elif(c==5):
+        mycursor.execute("select Order_ID, count(Customer_ID), Year from (select count(Order_id) as Order_ID, customer_id, year(Date_Time_of_Purchase) as Year from orders group by customer_id, Year ) as T group by Year, Order_ID with rollup;")
+        l=mycursor.fetchall()
+        print("{:<20} {:<20} {:<20}".format("Number of orders","Number of customers","Year"))
+        for row in l:
+            if(row[0]!=None):
+                print("{:<20} {:<20} {:<20}".format(row[0],row[1],row[2]))            
+    elif(c==6):
+        return
 while(True):
     print("Welcome to Golden Dairy:")
     ac=int(input("1. Customer login/sign up\n2. Admin login\n3. Product catalogue\n4. Get more product information\n5. Exit\n"))
