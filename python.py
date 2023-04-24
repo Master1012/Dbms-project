@@ -52,17 +52,44 @@ def customerpage(uid,name):
             lst = mycursor.fetchall()
             id=len(lst)
             if(pid<=id):
-                mycursor.execute("insert into product_in_cart values(%s,%s,%s)",(pid,uid,quant))
+                mycursor.execute("select * from product_in_cart where product_id=%s and Customer_ID=%s;",(pid,uid))
+                cartcheck=mycursor.fetchall()
+                if(len(cartcheck)!=0):
+                    mycursor.execute("update product_in_cart set quantity=quantity+%s where product_id =%s and customer_id=%s;",(quant,pid,uid))
+                else:
+                    mycursor.execute("insert into product_in_cart values(%s,%s,%s)",(pid,uid,quant))
                 con.commit()
                 print("Product added")
         elif(c==5):
-            confirm=str(input("Confirm order?(yes/no) "))
-            if(confirm=="yes"):
-                mycursor.execute("select * from product_in_cart where customer_id = %s",(uid,))
-                cart=mycursor.fetchall()
-                if(len(cart)!=0):
-                    mycursor.execute("insert into new_order ")
-                print("Order confirmed")
+            mycursor.execute("select product_id, quantity from product_in_cart where customer_id = %s",(uid,))
+            cart=mycursor.fetchall()
+            mycursor.execute("select id, price, availability from product")
+            prod=mycursor.fetchall()
+            sum=0
+            check=1
+            mycursor.execute("select * from orders")
+            lst = mycursor.fetchall()
+            id=len(lst)+1
+            if(len(cart)!=0):
+                for i in cart:
+                    if(i[1]<=prod[i[0]][2]):
+                        sum+=prod[i[0]][1]*i[1]
+                    else:
+                        print("Product ",i[0]," is out of stock")
+                        check=0
+                if(check):
+                    print("The total cost of your order is ",sum)
+                    confirm=str(input("Confirm order?(yes/no) "))
+                    if(confirm=="yes"):
+                        for i in cart:
+                            mycursor.execute("INSERT INTO New_order VALUES(%s,%s,%s)",(id,i[0],i[1]))
+                            mycursor.execute("update product set availability=availability - %s where id = %s",(i[1],i[0]))
+                            con.commit()
+                        mycursor.execute("delete from product_in_cart where customer_id=%s",(uid,))
+                        con.commit()
+                        print("Order confirmed")
+            else:
+                print("Looks like you haven't added anything to the cart yet")
         elif(c==6):
             mycursor.execute("select orders.order_id,orders.cost,product.name,product.id,product.price,product.Type,product.Quantity,new_order.Quantity as Number from orders inner join new_order on orders.order_id=new_order.orderid inner join product on product.id=new_order.productid where Customer_ID=%s;",(uid,))
             l=mycursor.fetchall()
@@ -116,7 +143,7 @@ def admin_login():
     # return adminpage(uid,name)
 def adminpage(uid,name):
     while(True):
-        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check sales info \n2. Check employees data\n3. Most selling product\n4. Check supplier data\n5. Add a product\n6. Add an employee\n7. Add a supplier\n8. Product catalogue\n9. More product information\n10. Check analysis\n11. Update employee role\n12. Logout\n"))
+        c = int(input(f"Welcome {name}! What would you like to do today?\n1. Check sales info \n2. Check employees data\n3. Most selling product\n4. Check supplier data\n5. Add a product\n6. Add an employee\n7. Add a supplier\n8. Product catalogue\n9. More product information\n10. Check analysis\n11. Update employee role\n12. Give order to production facility\n13. Logout\n"))
         if (c==1):
             date1=input("This will show the value of total sales between a time period\nEnter the starting date and time (in form of YYYY-MM-DD hh:mm:ss): ")
             date2 = input("Enter the ending date and time (in form of YYYY-MM-DD hh:mm:ss): ")
@@ -198,6 +225,10 @@ def adminpage(uid,name):
             con.commit()
             print("Updated employee role")
         elif(c==12):
+            pid=int(input("Enter the id of the product you want to give order for: "))
+            mycursor.execute("Update product set availability=availability + 100 where product.id=%s",(pid,))
+            con.commit()
+        elif(c==13):
             return 
 def productlist():
     print("Choose among the following categories")
@@ -223,7 +254,7 @@ def moreproductinfo():
     else:
         print("No such product exists")
 def checkanalysis():
-    c=int(input("Enter the type of analysis you wish to perform:\n1. Sales based on payment modes\n2. Employees based on roles\n3. Products based on rating and type\n4. Customers on how many orders they have given in a year\n5. Number of customers giving particular number of orders in a year\n6. Return"))
+    c=int(input("Enter the type of analysis you wish to perform:\n1. Sales based on payment modes\n2. Employees based on roles\n3. Products based on rating and type\n4. Customers on how many orders they have given in a year\n5. Number of customers giving particular number of orders in a year\n6. Return\n"))
     if(c==1):
         mycursor.execute("select coalesce(year(Date_Time_of_Purchase),'Total') as year, coalesce(Payment_Mode,'Total') as Payment_Mode, sum(Cost) from orders group by year, Payment_Mode with rollup;")
         l=mycursor.fetchall()
