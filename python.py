@@ -304,9 +304,48 @@ def checkanalysis():
                 print("{:<20} {:<20} {:<20}".format(row[0],row[1],row[2]))            
     elif(c==6):
         return
+def employee_login():
+    uid=input("Enter your employee id: ")
+    mycursor.execute("select Name,role from employee where id = %s", (uid,))
+    ename=mycursor.fetchall()
+    try:
+        if(ename[0][1]=="Delivery"):
+            delivery_page(uid,ename[0][0])
+        else:
+            employee_page(uid,ename[0][0])
+    except:
+        print("Invalid employee id")
+        return 
+def employee_page(eid,name):
+    while(True):
+        c=int(input(f"Welcome {name}! What would you like to do today?\n1. Check profile information\n2. Logout\n"))
+        if(c==1):
+            mycursor.execute("select * from employee where id=%s",(eid,))
+            l=mycursor.fetchall()
+            for row in l:
+                print(f"ID: {row[0]}\nName: {row[1]}\nAddress: {row[2]}\nEmail: {row[3]}\nContact_No: {row[4]}\nSalary: {row[5]}\nRole: {row[6]}\n")
+        elif(c==2):
+            return
+def delivery_page(eid,name):
+    while(True):
+        c=int(input(f"Welcome {name}! What would you like to do today?\n1. Check profile information\n2. Check orders delivered\n3. Logout\n"))
+        if(c==1):
+            mycursor.execute("select * from employee where id=%s",(eid,))
+            l=mycursor.fetchall()
+            for row in l:
+                print(f"ID: {row[0]}\nName: {row[1]}\nAddress: {row[2]}\nEmail: {row[3]}\nContact_No: {row[4]}\nSalary: {row[5]}\nRole: {row[6]}\n")
+        elif(c==2): 
+            mycursor.execute("select * from orders where employee_id=%s",(eid,))
+            l=mycursor.fetchall()
+            print("{:<10} {:<20} {:<10} {:<30} {:<10}".format('Order ID','Payment Mode','Cost','Date','Customer_ID'))
+            for i in l:
+                # print(i)
+                print("{:<10} {:<20} {:<10} {:<30} {:<10}".format(i[0],i[1],i[5],str(i[4]),i[3]))
+        elif(c==3):
+            return
 while(True):
     print("Welcome to Golden Dairy:")
-    ac=int(input("1. Customer login/sign up\n2. Admin login\n3. Product catalogue\n4. Get more product information\n5. Exit\n"))
+    ac=int(input("1. Customer login/sign up\n2. Admin login\n3. Product catalogue\n4. Get more product information\n5. Employee login\n6. Exit\n"))
     if(ac==1):
         c=int(input("1. Login\n2. Sign up\n3. Back\n"))
         if (c==1):
@@ -319,5 +358,7 @@ while(True):
         productlist()
     elif(ac==4):
         moreproductinfo()
-    elif (ac==5):
+    elif(ac==5):
+        employee_login()
+    elif (ac==6):
         break
