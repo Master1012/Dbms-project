@@ -1,4 +1,6 @@
 import mysql.connector
+import random
+import datetime
 con=mysql.connector.connect(host="localhost",user="root",passwd="Aditya",database="golden_dairy",charset="utf8")
 if con.is_connected():
     print("Successful")
@@ -10,17 +12,17 @@ res = mycursor.fetchall()
 def login():
     uid=input("Enter your user id: ")
     mycursor.execute("select password, Name from customers where customer_id = %s", (uid,))
-    try:
-        for row in mycursor:
-            name=row[1]
-            actual_passwd = row[0]
-            passwd=input("Enter your password: ")
-        if(actual_passwd==passwd):
-            return customerpage(uid,name)
-        else:
-            print("Invalid password")
-            return
-    except:
+    # try:
+    for row in mycursor:
+        name=row[1]
+        actual_passwd = row[0]
+        passwd=input("Enter your password: ")
+    if(actual_passwd==passwd):
+        return customerpage(uid,name)
+    else:
+        print("Invalid password")
+        return
+    # except:
         print("Invalid customer id")
         return 
     # for row in mycursor:
@@ -81,6 +83,14 @@ def customerpage(uid,name):
                     print("The total cost of your order is ",sum)
                     confirm=str(input("Confirm order?(yes/no) "))
                     if(confirm=="yes"):
+                        mycursor.execute("select * from employee where role='Delivery'")
+                        elist=mycursor.fetchall()
+                        eid=elist[random.randint(0,len(elist))][0]
+                        paymode=input("Enter your mode of payment for the order (Cash/Credit Card/Debit Card/Net Banking/UPI): ")
+                        current_datetime = datetime.datetime.now()
+                        formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        mycursor.execute("insert into orders values(%s,%s,%s,%s,%s,%s)",(id,paymode,eid,uid,formatted_datetime,sum))
+                        con.commit()
                         for i in cart:
                             mycursor.execute("INSERT INTO New_order VALUES(%s,%s,%s)",(id,i[0],i[1]))
                             mycursor.execute("update product set availability=availability - %s where id = %s",(i[1],i[0]))
