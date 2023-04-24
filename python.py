@@ -12,17 +12,17 @@ res = mycursor.fetchall()
 def login():
     uid=input("Enter your user id: ")
     mycursor.execute("select password, Name from customers where customer_id = %s", (uid,))
-    # try:
-    for row in mycursor:
-        name=row[1]
-        actual_passwd = row[0]
-        passwd=input("Enter your password: ")
-    if(actual_passwd==passwd):
-        return customerpage(uid,name)
-    else:
-        print("Invalid password")
-        return
-    # except:
+    try:
+        for row in mycursor:
+            name=row[1]
+            actual_passwd = row[0]
+            passwd=input("Enter your password: ")
+        if(actual_passwd==passwd):
+            return customerpage(uid,name)
+        else:
+            print("Invalid password")
+            return
+    except:
         print("Invalid customer id")
         return 
     # for row in mycursor:
